@@ -1,5 +1,5 @@
 __pycache__/
-interaction_data/
-metadata_1656673401/
+data/
+exp/
 *.ipynb
 output_data/
