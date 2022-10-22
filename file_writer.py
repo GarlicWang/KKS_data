@@ -105,12 +105,12 @@ class FileWriter:
 
         logger.info(f"writing tuple data to {output_dir_path}/train.encoded.txt")
         with open(output_dir_path / "train.encoded.txt", "w") as f:
-            for usr, rel, item in _training_df[["user_id", "interaction", "item_id"]].values:
-                f.write(str(usr) + '\t' + str(rel) + '\t' + str(item) + '\n')
+            for usr, item in _training_df[["user_id", "item_id"]].values:
+                f.write(str(usr) + '\t' + str(item) + '\n')
         logger.info(f"writing tuple data to {output_dir_path}/test.encoded.txt")
         with open(output_dir_path / "test.encoded.txt", "w") as f:
-            for usr, rel, item in _testing_df[["user_id", "interaction", "item_id"]].values:
-                f.write(str(usr) + '\t' + str(rel) + '\t' + str(item) + '\n')
+            for usr, item in _testing_df[["user_id", "item_id"]].values:
+                f.write(str(usr) + '\t' + str(item) + '\n')
 
 
     def write_userwise(
