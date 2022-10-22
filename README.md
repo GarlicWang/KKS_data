@@ -46,7 +46,7 @@ optional arguments:
 Example Command:
 ```
 python3 main.py \
--interaction_paths data/16b9973c-3556-40be-81af-89efa792a880.csv data/36d1641e-1ee9-466a-8e10-b1b0ca2b4f98.csv
+-interaction_paths data/16b9973c-3556-40be-81af-89efa792a880.csv data/36d1641e-1ee9-466a-8e10-b1b0ca2b4f98.csv \
 -meta_dir_path data/metadata_1656673401
 ```
 You can edit the data path directly.
