@@ -203,8 +203,12 @@ class FileWriter:
         kg_data_array = np.array(kg_data)
         item_encoder, rel_encoder, ent_encoder = LabelEncoder(), LabelEncoder(), LabelEncoder()
         kg_data_array[:,0] = item_encoder.fit_transform(kg_data_array[:,0])
+        item_num = len(item_encoder.classes_)
+        logger.info(f"item num = {item_num}")
         kg_data_array[:,1] = rel_encoder.fit_transform(kg_data_array[:,1])
         kg_data_array[:,2] = ent_encoder.fit_transform(kg_data_array[:,2])
+        for i in range(len(kg_data_array)):
+            kg_data_array[i,2] = str(int(kg_data_array[i,2]) + item_num)
         logger.info(f"writing class data to {output_dir_path}/item_classes.npy")
         np.save(Path(output_dir_path) / 'item_classes.npy', item_encoder.classes_)
         logger.info(f"writing class data to {output_dir_path}/rel_classes.npy")
