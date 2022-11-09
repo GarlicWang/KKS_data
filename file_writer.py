@@ -19,19 +19,35 @@ class FileWriter:
         self,
         training_df,
         testing_df,
+        kg_data,
+        output_dir_path,
     ):
-        usr_encoder, rel_encoder, item_encoder = LabelEncoder(), LabelEncoder(), LabelEncoder()
+        logger.info(f"remapping data...")
+        output_dir_path.mkdir(parents=True, exist_ok=True)
+        kg_data_array = np.array(kg_data)
+        usr_encoder, interaction_encoder, item_encoder, rel_encoder, ent_encoder = LabelEncoder(), LabelEncoder(), LabelEncoder(), LabelEncoder(), LabelEncoder()
         usr_encoder.fit(list(set(training_df['user_id']) | set(testing_df['user_id'])))
-        rel_encoder.fit(list(set(training_df['interaction']) | set(testing_df['interaction'])))
-        item_encoder.fit(list(set(training_df['item_id']) | set(testing_df['item_id'])))
-        training_df['user_id'] = usr_encoder.transform(training_df['user_id'])
-        training_df['interaction'] = rel_encoder.transform(training_df['interaction'])
-        training_df['item_id'] = item_encoder.transform(training_df['item_id'])
-        testing_df['user_id'] = usr_encoder.transform(testing_df['user_id'])
-        testing_df['interaction'] = rel_encoder.transform(testing_df['interaction'])
-        testing_df['item_id'] = item_encoder.transform(testing_df['item_id'])
-        return usr_encoder, rel_encoder, item_encoder
-
+        interaction_encoder.fit(list(set(training_df['interaction']) | set(testing_df['interaction'])))
+        item_encoder.fit(list(set(kg_data_array[:,0]) | set(training_df['item_id']) | set(testing_df['item_id'])))
+        rel_encoder.fit(kg_data_array[:,1])
+        ent_encoder.fit(kg_data_array[:,2])
+        
+        self.usr_encoder = usr_encoder
+        self.interaction_encoder = interaction_encoder
+        self.item_encoder = item_encoder
+        self.rel_encoder = rel_encoder
+        self.ent_encoder = ent_encoder
+        
+        logger.info(f"writing encoder to {output_dir_path}/usr_classes.npy")
+        np.save(output_dir_path / 'usr_classes.npy', usr_encoder.classes_)
+        logger.info(f"writing encoder to {output_dir_path}/interaction_classes.npy")
+        np.save(output_dir_path / 'interaction_classes.npy', interaction_encoder.classes_)
+        logger.info(f"writing encoder to {output_dir_path}/item_classes.npy")
+        np.save(output_dir_path / 'item_classes.npy', item_encoder.classes_)
+        logger.info(f"writing class data to {output_dir_path}/rel_classes.npy")
+        np.save(Path(output_dir_path) / 'rel_classes.npy', rel_encoder.classes_)
+        logger.info(f"writing class data to {output_dir_path}/ent_classes.npy")
+        np.save(Path(output_dir_path) / 'ent_classes.npy', ent_encoder.classes_)
 
     def write_triple(
         self,
@@ -52,16 +68,13 @@ class FileWriter:
             for usr, rel, item in _testing_df[["user_id", "interaction", "item_id"]].values:
                 f.write(str(usr) + '\t' + str(rel) + '\t' + str(item) + '\n')
 
-        usr_encoder, rel_encoder, item_encoder = self.remap(
-            _training_df,
-            _testing_df,
-        )
-        logger.info(f"writing encoder to {output_dir_path}/usr_classes.npy")
-        np.save(output_dir_path / 'usr_classes.npy', usr_encoder.classes_)
-        logger.info(f"writing encoder to {output_dir_path}/rel_classes.npy")
-        np.save(output_dir_path / 'rel_classes.npy', rel_encoder.classes_)
-        logger.info(f"writing encoder to {output_dir_path}/item_classes.npy")
-        np.save(output_dir_path / 'item_classes.npy', item_encoder.classes_)
+        # remap
+        _training_df['user_id'] = self.usr_encoder.transform(_training_df['user_id'])
+        _training_df['interaction'] = self.interaction_encoder.transform(_training_df['interaction'])
+        _training_df['item_id'] = self.item_encoder.transform(_training_df['item_id'])
+        _testing_df['user_id'] = self.usr_encoder.transform(_testing_df['user_id'])
+        _testing_df['interaction'] = self.interaction_encoder.transform(_testing_df['interaction'])
+        _testing_df['item_id'] = self.item_encoder.transform(_testing_df['item_id'])
 
         logger.info(f"writing triple data to {output_dir_path}/train.encoded.txt")
         with open(output_dir_path / "train.encoded.txt", "w") as f:
@@ -91,17 +104,14 @@ class FileWriter:
         with open(output_dir_path / "test.txt", "w") as f:
             for usr, item in testing_df[["user_id", "item_id"]].values:
                 f.write(str(usr) + '\t' + str(item) + '\n')
-
-        usr_encoder, rel_encoder, item_encoder = self.remap(
-            _training_df,
-            _testing_df,
-        )
-        logger.info(f"writing encoder to {output_dir_path}/usr_classes.npy")
-        np.save(output_dir_path / 'usr_classes.npy', usr_encoder.classes_)
-        logger.info(f"writing encoder to {output_dir_path}/rel_classes.npy")
-        np.save(output_dir_path / 'rel_classes.npy', rel_encoder.classes_)
-        logger.info(f"writing encoder to {output_dir_path}/item_classes.npy")
-        np.save(output_dir_path / 'item_classes.npy', item_encoder.classes_)
+        
+        # remap
+        _training_df['user_id'] = self.usr_encoder.transform(_training_df['user_id'])
+        _training_df['interaction'] = self.interaction_encoder.transform(_training_df['interaction'])
+        _training_df['item_id'] = self.item_encoder.transform(_training_df['item_id'])
+        _testing_df['user_id'] = self.usr_encoder.transform(_testing_df['user_id'])
+        _testing_df['interaction'] = self.interaction_encoder.transform(_testing_df['interaction'])
+        _testing_df['item_id'] = self.item_encoder.transform(_testing_df['item_id'])
 
         logger.info(f"writing tuple data to {output_dir_path}/train.encoded.txt")
         with open(output_dir_path / "train.encoded.txt", "w") as f:
@@ -147,17 +157,14 @@ class FileWriter:
                 items = [str(item) for item in items]
                 items = " ".join(items)
                 f.write(str(usr) + " " + items + '\n')
-
-        usr_encoder, rel_encoder, item_encoder = self.remap(
-            _training_df,
-            _testing_df,
-        )
-        logger.info(f"writing encoder to {output_dir_path}/usr_classes.npy")
-        np.save(output_dir_path / 'usr_classes.npy', usr_encoder.classes_)
-        logger.info(f"writing encoder to {output_dir_path}/rel_classes.npy")
-        np.save(output_dir_path / 'rel_classes.npy', rel_encoder.classes_)
-        logger.info(f"writing encoder to {output_dir_path}/item_classes.npy")
-        np.save(output_dir_path / 'item_classes.npy', item_encoder.classes_)
+        
+        # remap
+        _training_df['user_id'] = self.usr_encoder.transform(_training_df['user_id'])
+        _training_df['interaction'] = self.interaction_encoder.transform(_training_df['interaction'])
+        _training_df['item_id'] = self.item_encoder.transform(_training_df['item_id'])
+        _testing_df['user_id'] = self.usr_encoder.transform(_testing_df['user_id'])
+        _testing_df['interaction'] = self.interaction_encoder.transform(_testing_df['interaction'])
+        _testing_df['item_id'] = self.item_encoder.transform(_testing_df['item_id'])
 
         train_usr_dict, test_usr_dict = {}, {}
         for usr, item in _training_df[["user_id", "item_id"]].values:
@@ -188,6 +195,7 @@ class FileWriter:
     def write_kgdata(
         self,
         kg_data,
+        kg_data_text,
         output_dir_path,
     ):
         logger.info("writing kg data...")
@@ -197,24 +205,21 @@ class FileWriter:
         with open(output_dir_path / 'kg.txt', 'w') as f:
             for h, r, t in kg_data:
                 f.write(str(h) + '\t' + str(r) + '\t' + str(t) +'\n')
-
+                
+        logger.info(f"writing kg data with name to {output_dir_path}/kg.name.txt")
+        with open(output_dir_path / 'kg.name.txt', 'w') as f:
+            for h, r, t in kg_data_text:
+                f.write(str(h) + '\t' + str(r) + '\t' + str(t) +'\n')
 
         # remap
         kg_data_array = np.array(kg_data)
-        item_encoder, rel_encoder, ent_encoder = LabelEncoder(), LabelEncoder(), LabelEncoder()
-        kg_data_array[:,0] = item_encoder.fit_transform(kg_data_array[:,0])
-        item_num = len(item_encoder.classes_)
+        kg_data_array[:,0] = self.item_encoder.transform(kg_data_array[:,0])
+        item_num = len(self.item_encoder.classes_)
         logger.info(f"item num = {item_num}")
-        kg_data_array[:,1] = rel_encoder.fit_transform(kg_data_array[:,1])
-        kg_data_array[:,2] = ent_encoder.fit_transform(kg_data_array[:,2])
+        kg_data_array[:,1] = self.rel_encoder.transform(kg_data_array[:,1])
+        kg_data_array[:,2] = self.ent_encoder.transform(kg_data_array[:,2])
         for i in range(len(kg_data_array)):
             kg_data_array[i,2] = str(int(kg_data_array[i,2]) + item_num)
-        logger.info(f"writing class data to {output_dir_path}/item_classes.npy")
-        np.save(Path(output_dir_path) / 'item_classes.npy', item_encoder.classes_)
-        logger.info(f"writing class data to {output_dir_path}/rel_classes.npy")
-        np.save(Path(output_dir_path) / 'rel_classes.npy', rel_encoder.classes_)
-        logger.info(f"writing class data to {output_dir_path}/ent_classes.npy")
-        np.save(Path(output_dir_path) / 'ent_classes.npy', ent_encoder.classes_)
         kg_data = kg_data_array.tolist()
 
         logger.info(f"writing kg data to {output_dir_path}/kg.encoded.txt")

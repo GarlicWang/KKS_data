@@ -67,13 +67,19 @@ training_df, testing_df = data_preprocessor.filter_interaction_data(
 )
 
 # filter metadata
-kg_data = data_preprocessor.filter_metadata(
+kg_data, kg_data_text = data_preprocessor.filter_metadata(
     select_branch_type = args.select_branch_type,
     select_relation_type = args.select_relation_type
 )
 
 # write files
 file_writer = FileWriter()
+file_writer.remap(
+    training_df = training_df,
+    testing_df = testing_df,
+    kg_data = kg_data,
+    output_dir_path = Path('exp/encoders')
+)
 file_writer.write_triple(
     training_df = training_df,
     testing_df = testing_df,
@@ -91,5 +97,6 @@ file_writer.write_userwise(
 )
 file_writer.write_kgdata(
     kg_data = kg_data,
+    kg_data_text = kg_data_text,
     output_dir_path = Path('exp/kgdata')
 )

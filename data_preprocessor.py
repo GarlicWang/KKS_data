@@ -113,13 +113,15 @@ class DataPreprocessor:
                             series[rel] = list(set(series[rel]) | set(episode[rel]))
         select_branch_type = list(set(select_branch_type) - {'season', 'episode'})
 
-        kg_data = []
+        kg_data, kg_data_text = [], []
         for branch in select_branch_type:
             for item in metadata_dict[branch]:
                 title = item['name']
+                id = item['id']
                 for rel in select_relation_type:
                     if item[rel] != None:
                         for ent in item[rel]:
-                            kg_data.append([title, rel, ent])
-        return kg_data
+                            kg_data.append([id, rel, ent])
+                            kg_data_text.append([title, rel, ent])
+        return kg_data, kg_data_text
 
