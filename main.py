@@ -51,6 +51,11 @@ parser.add_argument(
     nargs='+',
     help='types to be selected for train/test'
 )
+parser.add_argument(
+    '-output_dir_path',
+    required=True,
+    help='directory save the output data'
+)
 args = parser.parse_args()
 
 data_preprocessor = DataPreprocessor(
@@ -78,25 +83,25 @@ file_writer.remap(
     training_df = training_df,
     testing_df = testing_df,
     kg_data = kg_data,
-    output_dir_path = Path('exp/encoders')
+    output_dir_path = Path(f'{args.output_dir_path}/encoders')
 )
 file_writer.write_triple(
     training_df = training_df,
     testing_df = testing_df,
-    output_dir_path = Path('exp/triple')
+    output_dir_path = Path(f'{args.output_dir_path}/triple')
 )
 file_writer.write_tuple(
     training_df = training_df,
     testing_df = testing_df,
-    output_dir_path = Path('exp/tuple')
+    output_dir_path = Path(f'{args.output_dir_path}/tuple')
 )
 file_writer.write_userwise(
     training_df = training_df,
     testing_df = testing_df,
-    output_dir_path = Path('exp/userwise')
+    output_dir_path = Path(f'{args.output_dir_path}/userwise')
 )
 file_writer.write_kgdata(
     kg_data = kg_data,
     kg_data_text = kg_data_text,
-    output_dir_path = Path('exp/kgdata')
+    output_dir_path = Path(f'{args.output_dir_path}/kgdata')
 )
